@@ -200,6 +200,13 @@ function create_sandbox()
             now = now;
         };
 
+        os = {
+          clock = clock;
+          date = date;
+          difftime = difftime;
+          time = time;
+        };
+
         events = {
             child_add = {};
             child_remove = {};
