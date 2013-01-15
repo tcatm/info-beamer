@@ -64,7 +64,7 @@
 #define MAX_SNAPSHOTS 5 // maximum number of snapshots per render
 
 // Default host/port (both udp & tcp)
-#define LISTEN_ADDR  "0.0.0.0"
+#define LISTEN_ADDR  "::"
 #define DEFAULT_PORT 4444
 
 #ifdef DEBUG
@@ -1079,8 +1079,8 @@ static void GLFWCALL keypressed(int key, int action) {
 
 static int create_socket(int type) {
     int one = 1;
-    struct sockaddr_in sin;
-    int fd = socket(AF_INET, type, 0);
+    struct sockaddr_in6 sin;
+    int fd = socket(AF_INET6, type, 0);
 
     if (fd < 0)
         die("socket failed: %s", strerror(errno));
@@ -1089,16 +1089,16 @@ static int create_socket(int type) {
         die("setsockopt reuse failed: %s", strerror(errno));
 
     memset(&sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
+    sin.sin6_family = AF_INET6;
 
     const char *addr = getenv("INFOBEAMER_ADDR");
     if (!addr) addr = LISTEN_ADDR;
-    if (!inet_aton(addr, &sin.sin_addr))
+    if (!inet_pton(sin.sin6_family, addr, &sin.sin6_addr))
         die("invalid address %s", addr);
 
-    sin.sin_port = htons(listen_port);
+    sin.sin6_port = htons(listen_port);
 
-    if (bind(fd, (struct sockaddr *)&sin, sizeof(struct sockaddr)) < 0)
+    if (bind(fd, (struct sockaddr *)&sin, sizeof(struct sockaddr_in6)) < 0)
         die("binding to %s port %d failed: %s",
             type == SOCK_DGRAM ? "udp" : "tcp",
             listen_port,
