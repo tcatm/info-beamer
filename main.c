@@ -1472,6 +1472,8 @@ static void init_default_texture() {
 }
 
 int main(int argc, char *argv[]) {
+    setlocale(LC_ALL, "");
+
     fprintf(stdout, VERSION_STRING " (" INFO_URL ")\n");
     fprintf(stdout, "Copyright (c) 2012, Florian Wesch <fw@dividuum.de>\n\n");
 
