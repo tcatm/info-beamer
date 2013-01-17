@@ -59,7 +59,7 @@
 
 #define NODE_CODE_FILE "node.lua"
 
-#define MAX_MEM 2000000 // KB
+#define MAX_MEM 32*1024*1024 // byte
 #define MAX_GL_PUSH 20 // glPushMatrix depth
 #define MAX_CHILD_RENDERS 20 // maximum childs rendered per node
 #define MAX_SNAPSHOTS 5 // maximum number of snapshots per render
