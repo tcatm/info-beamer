@@ -277,7 +277,7 @@ static void node_boot(node_t *node) {
     lua_node_enter(node, 1, PROFILE_BOOT);
 }
 
-// notify of child update 
+// notify of child update
 static void node_child_update(node_t *node, const char *name, int added) {
     lua_pushliteral(node->L, "child_update");
     lua_pushstring(node->L, name);
@@ -285,7 +285,7 @@ static void node_child_update(node_t *node, const char *name, int added) {
     lua_node_enter(node, 3, PROFILE_UPDATE);
 }
 
-// notify of content update 
+// notify of content update
 static void node_content_update(node_t *node, const char *name, int added) {
     fprintf(stderr, YELLOW("[%s]")" update %c%s\n", node->path, added ? '+' : '-', name);
     lua_pushliteral(node->L, "content_update");
@@ -397,7 +397,7 @@ static int luaGlPerspective(lua_State *L) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluPerspective(fov, (float)node->width / (float)node->height, 0.1, 10000);
-    gluLookAt(eye_x, eye_y, eye_z, 
+    gluLookAt(eye_x, eye_y, eye_z,
               center_x, center_y, center_z,
               0, -1, 0);
     glMatrixMode(GL_MODELVIEW);
@@ -527,7 +527,7 @@ static int luaPrint(lua_State *L) {
     int n = lua_gettop(L);
     lua_getglobal(L, "tostring");
     for (int i = 1; i <= n; i++) {
-        lua_pushvalue(L, n + 1); 
+        lua_pushvalue(L, n + 1);
         lua_pushvalue(L, i);
         lua_call(L, 1, 1);
         if (!lua_isstring(L, -1))
@@ -827,7 +827,7 @@ static void node_remove_alias(node_t *node) {
 static void node_tree_gc(node_t *node) {
     if (!node_is_idle(node))
         lua_gc(node->L, LUA_GCSTEP, 30);
-    node_t *child, *tmp; 
+    node_t *child, *tmp;
     HASH_ITER(by_name, node->childs, child, tmp) {
         node_tree_gc(child);
     };
@@ -854,7 +854,7 @@ static void node_remove_child_by_name(node_t* node, const char *name) {
     HASH_FIND(by_name, node->childs, name, strlen(name), child);
     if (!child)
         die("child not found: %s", name);
-    node_remove_child(node, child); 
+    node_remove_child(node, child);
 }
 
 static void node_reset_quota(node_t *node) {
@@ -880,7 +880,7 @@ static void node_reset_profiler(node_t *node) {
 
 static void node_init(node_t *node, node_t *parent, const char *path, const char *name) {
     // add directory watcher
-    node->wd = inotify_add_watch(inotify_fd, path, 
+    node->wd = inotify_add_watch(inotify_fd, path,
         IN_CLOSE_WRITE|IN_CREATE|IN_DELETE|IN_DELETE_SELF|
         IN_MOVE);
     if (node->wd == -1)
@@ -980,7 +980,7 @@ static void node_init(node_t *node, node_t *parent, const char *path, const char
 }
 
 static void node_free(node_t *node) {
-    node_t *child, *tmp; 
+    node_t *child, *tmp;
     HASH_ITER(by_name, node->childs, child, tmp) {
         node_remove_child(node, child);
     }
@@ -1012,7 +1012,7 @@ static void node_search_and_boot(node_t *node) {
 
     struct dirent *ep;
     while ((ep = readdir(dp))) {
-        if (ep->d_name[0] == '.') 
+        if (ep->d_name[0] == '.')
             continue;
 
         const char *child_name = ep->d_name;
@@ -1065,9 +1065,9 @@ static node_t *node_find_by_path_or_alias(const char *needle) {
 }
 
 static void node_print_profile(node_t *node, int depth) {
-    node_t *child, *tmp; 
+    node_t *child, *tmp;
     double delta = (now - node->last_profile) * 1000;
-    fprintf(stderr, "%c%4dkb %3.0f %5.1f %6.1f %5d  %5d %5.1lf%% %5.1lf%% %5.1lf%% %*s '- %s (%s)\n", 
+    fprintf(stderr, "%c%4dkb %3.0f %5.1f %6.1f %5d  %5d %5.1lf%% %5.1lf%% %5.1lf%% %*s '- %s (%s)\n",
         node_is_blacklisted(node) ? 'X' : node_is_idle(node) ? ' ' : '*',
         lua_gc(node->L, LUA_GCCOUNT, 0),
         node->num_frames * 1000 / delta,
@@ -1117,14 +1117,14 @@ static void check_inotify() {
                 continue; // ignore dot files
 
             // notifies, that wd was removed from kernel.
-            // can be ignored (since it is handled in 
+            // can be ignored (since it is handled in
             // IN_DELETE_SELF).
             if (event->mask & IN_IGNORED)
                 continue;
 
             node_t *node;
             HASH_FIND(by_wd, nodes_by_wd, &event->wd, sizeof(int), node);
-            if (!node) 
+            if (!node)
                 die("node not found: %s", event->name);
 
             char path[PATH_MAX];
@@ -1134,7 +1134,7 @@ static void check_inotify() {
             if (event->mask & IN_CREATE) {
                 struct stat stat_buf;
                 if (stat(path, &stat_buf) == -1) {
-                    // file/path can be gone (race between inotify and 
+                    // file/path can be gone (race between inotify and
                     // user actions)
                     fprintf(stderr, "cannot stat %s\n", path);
                     continue;
@@ -1311,7 +1311,7 @@ static void udp_read(int fd, short event, void *arg) {
 }
 
 static void open_udp(struct event *event) {
-    int fd = create_socket(SOCK_DGRAM); 
+    int fd = create_socket(SOCK_DGRAM);
     event_set(event, fd, EV_READ | EV_PERSIST, &udp_read, NULL);
     if (event_add(event, NULL) == -1)
         die("event_add failed");
@@ -1361,7 +1361,7 @@ static void client_read(struct bufferevent *bev, void *arg) {
             lua_pushlightuserdata(node->L, client);
             node_event(client->node, "connect", 1);
         }
-    } 
+    }
     free(line);
 }
 
@@ -1467,7 +1467,7 @@ static void init_default_texture() {
     glGenTextures(1, &default_tex);
     glBindTexture(GL_TEXTURE_2D, default_tex);
     unsigned char white_pixel[] = {255, 255, 255, 255};
-    glTexImage2D(GL_TEXTURE_2D, 0, 4, 1, 1, 0, 
+    glTexImage2D(GL_TEXTURE_2D, 0, 4, 1, 1, 0,
         GL_RGBA, GL_UNSIGNED_BYTE, white_pixel);
 }
 
@@ -1478,7 +1478,7 @@ int main(int argc, char *argv[]) {
     fprintf(stdout, "Copyright (c) 2012, Florian Wesch <fw@dividuum.de>\n\n");
 
     if (argc != 2 || (argc == 2 && !strcmp(argv[1], "-h"))) {
-        fprintf(stderr, 
+        fprintf(stderr,
             "Usage: %s <path_to_root_node>\n"
             "\n"
             "Optional environment variables:\n"
