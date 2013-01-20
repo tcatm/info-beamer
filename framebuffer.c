@@ -32,6 +32,7 @@ static void unlink_framebuffer(framebuffer_t *framebuffer) {
 
 void make_framebuffer(int width, int height, GLuint *tex, GLuint *fbo) {
     framebuffer_t *framebuffer, *tmp;
+    GLuint depth;
 
     DL_FOREACH_SAFE(framebuffers, framebuffer, tmp) {
         // Same size?
@@ -57,7 +58,14 @@ void make_framebuffer(int width, int height, GLuint *tex, GLuint *fbo) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_INT, NULL);
 
+    glGenTextures(1, &depth);
+    glBindTexture(GL_TEXTURE_2D, depth);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tex, 0);
+    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depth, 0);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         die("cannot initialize new framebuffer");
 }
@@ -69,7 +77,7 @@ void recycle_framebuffer(int width, int height, GLuint tex, GLuint fbo) {
     framebuffer->tex = tex;
     framebuffer->fbo = fbo;
 
-    // fprintf(stderr, "added recyleable framebuffer %dx%d %d %d\n", framebuffer->width, framebuffer->height, 
+    // fprintf(stderr, "added recyleable framebuffer %dx%d %d %d\n", framebuffer->width, framebuffer->height,
     //     framebuffer->tex, framebuffer->fbo);
 
     DL_APPEND(framebuffers, framebuffer);

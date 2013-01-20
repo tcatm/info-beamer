@@ -72,8 +72,8 @@
 #define MAX_RUNAWAY_TIME 10 // sec
 #define MAX_PCALL_TIME  5000000 // usec
 #else
-#define MAX_RUNAWAY_TIME 1 // sec
-#define MAX_PCALL_TIME  500000 // usec
+#define MAX_RUNAWAY_TIME 10 // sec
+#define MAX_PCALL_TIME  5000000 // usec
 #endif
 
 #define NO_GL_PUSHPOP -1
@@ -372,6 +372,16 @@ static int luaSetup(lua_State *L) {
     return 0;
 }
 
+static int luaGlEnableDepth(lua_State *L) {
+    glEnable(GL_DEPTH_TEST);
+    return 0;
+}
+
+static int luaGlDisableDepth(lua_State *L) {
+    glDisable(GL_DEPTH_TEST);
+    return 0;
+}
+
 static int luaGlOrtho(lua_State *L) {
     node_t *node = lua_touserdata(L, lua_upvalueindex(1));
     glMatrixMode(GL_PROJECTION);
@@ -396,7 +406,7 @@ static int luaGlPerspective(lua_State *L) {
     double center_z = luaL_checknumber(L, 7);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fov, (float)node->width / (float)node->height, 0.1, 10000);
+    gluPerspective(fov, (float)node->width / (float)node->height, 1.0, 10000);
     gluLookAt(eye_x, eye_y, eye_z,
               center_x, center_y, center_z,
               0, -1, 0);
@@ -549,7 +559,7 @@ static int luaGlClear(lua_State *L) {
     GLdouble b = luaL_checknumber(L, 3);
     GLdouble a = luaL_checknumber(L, 4);
     glClearColor(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(0);
     return 0;
 }
@@ -760,15 +770,15 @@ static int node_render_to_image(lua_State *L, node_t *node) {
     if (!node_setup_completed(node)) {
         node_printf(node, "node not initialized with gl.setup()\n");
         glClearColor(0.5, 0.5, 0.5, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     } else if (node_is_blacklisted(node)) {
         node_printf(node, "node is blacklisted\n");
         glClearColor(0.5, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     } else {
         // clear with transparent color
         glClearColor(1, 1, 1, 0);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // render node
         node->gl_matrix_depth = 0;
@@ -946,6 +956,8 @@ static void node_init(node_t *node, node_t *parent, const char *path, const char
     lua_register_node_func(node, "glScale", luaGlScale);
     lua_register_node_func(node, "glOrtho", luaGlOrtho);
     lua_register_node_func(node, "glPerspective", luaGlPerspective);
+    lua_register_node_func(node, "glEnableDepth", luaGlEnableDepth);
+    lua_register_node_func(node, "glDisableDepth", luaGlDisableDepth);
 
     lua_register(node->L, "now", luaNow);
 
@@ -1432,14 +1444,6 @@ static void tick() {
 
     event_loop(EVLOOP_NONBLOCK);
 
-    glEnable(GL_TEXTURE_2D);
-
-    glEnable(GL_BLEND);
-    glBlendFuncSeparate(
-        GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
-        GL_ONE_MINUS_DST_ALPHA, GL_ONE
-    );
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glMatrixMode(GL_PROJECTION);
@@ -1452,7 +1456,7 @@ static void tick() {
     glLoadIdentity();
 
     glClearColor(0.05, 0.05, 0.05, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     node_render_self(&root, win_w, win_h);
 
     glfwSwapBuffers();
@@ -1551,7 +1555,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(stderr, INFO("initial size is %dx%d\n"), width, height);
 
-    if(!glfwOpenWindow(height, width, 8,8,8,8, 0,0, mode))
+    if(!glfwOpenWindow(height, width, 8,8,8,8, 24, 0, mode))
         die("cannot open window");
 
     GLenum err = glewInit();
@@ -1564,6 +1568,16 @@ int main(int argc, char *argv[]) {
     glfwSwapInterval(1);
     glfwSetWindowSizeCallback(reshape);
     glfwSetKeyCallback(keypressed);
+
+    glClearDepth(1.0f);
+    glDepthFunc(GL_LEQUAL);
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFuncSeparate(
+        GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+        GL_ONE_MINUS_DST_ALPHA, GL_ONE
+    );
 
     if (mode == GLFW_FULLSCREEN)
         glfwDisable(GLFW_MOUSE_CURSOR);

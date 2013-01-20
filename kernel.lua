@@ -194,6 +194,8 @@ function create_sandbox()
             scale = glScale;
             ortho = glOrtho;
             perspective = glPerspective;
+            enabledepth = glEnableDepth;
+            disabledepth = glDisableDepth;
         };
 
         sys = {
