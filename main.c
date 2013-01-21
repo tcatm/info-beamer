@@ -363,10 +363,10 @@ static int luaSetup(lua_State *L) {
         return luaL_error(L, "cannot change width or height while rendering");
     int width = (int)luaL_checknumber(L, 1);
     int height = (int)luaL_checknumber(L, 2);
-    if (width < 32 || width > 2048)
-        luaL_argerror(L, 1, "invalid width. must be within [32,2048]");
-    if (height < 32 || height > 2048)
-        luaL_argerror(L, 2, "invalid height. must be within [32,2048]");
+    if (width < 32 || width > 8192)
+        luaL_argerror(L, 1, "invalid width. must be within [32,8192]");
+    if (height < 32 || height > 8192)
+        luaL_argerror(L, 2, "invalid height. must be within [32,8192]");
     node->width = width;
     node->height = height;
     return 0;
